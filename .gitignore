@@ -1,0 +1,10 @@
+.vscode
+.idea
+.env
+.DS_STORE
+mongoData
+node_modules
+.module-cache
+*.log*
+build
+dist

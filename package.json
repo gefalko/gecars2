@@ -1,0 +1,24 @@
+{
+  "name": "gecars2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Edgaras Karka <karka.edgaras@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build-createUpdateSimasFilters": "webpack --targetFile=createUpdateSimasFilters"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.7",
+    "prettier": "^1.19.1",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.2",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.146",
+    "@types/mongoose": "^5.5.30",
+    "lodash": "^4.17.15",
+    "mongoose": "^5.7.10"
+  }
+}
