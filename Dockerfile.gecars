@@ -1,0 +1,14 @@
+FROM node:latest
+RUN mkdir -p /usr/app
+WORKDIR /usr/app
+COPY src/ /usr/app/src/
+COPY package.json /usr/app/package.json
+COPY webpack.config.js /usr/app/webpack.config.js
+COPY tsconfig.json /usr/app/tsconfig.json
+COPY initAndStartService.sh /usr/app/initAndStartService.sh
+COPY wait-for-it.sh /usr/app/wait-for-it.sh
+RUN yarn
+RUN yarn build
+
+RUN ["chmod", "+x", "/usr/app/initAndStartService.sh"]
+RUN ["chmod", "+x", "/usr/app/wait-for-it.sh"]

@@ -2,6 +2,7 @@
 .idea
 .env
 .DS_STORE
+dist
 mongoData
 node_modules
 .module-cache

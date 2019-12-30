@@ -1,0 +1,20 @@
+version: '3'
+services:
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"
+  gecar_app:
+    build: 
+      context: . 
+      dockerfile: Dockerfile.gecars
+    restart: always
+    tty: true
+    ports:
+      - 3000:3000
+    depends_on:
+      - mongo
+    command: bash -c "/usr/app/wait-for-it.sh --timeout=20 mongo:27017 && /usr/app/initAndStartService.sh"

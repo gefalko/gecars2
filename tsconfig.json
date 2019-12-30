@@ -2,11 +2,11 @@
   "compilerOptions": {
     "skipLibCheck": true,
     "sourceMap": true,
-    "target": "esnext",
+    "target": "es2018",
     "jsx": "react",
     "module": "esnext",
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false,
     "strict": true,
     "moduleResolution": "node",
     "declaration": false,
@@ -16,13 +16,8 @@
     "outDir": "build",
     "noUnusedLocals": true,
     "lib": ["es6", "es7", "dom"],
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": "./src"
   },
-  "exclude": ["build", "node_modules"],
-  "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "~*": ["./*"]
-    }
-  }
+  "exclude": ["build", "node_modules"]
 }
