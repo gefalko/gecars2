@@ -2,6 +2,8 @@
 
 echo "STARTING..."
 
+sleep 30
+
 curl mongo:27017
 
 node /usr/app/dist/insertUpdateDbProviders.js

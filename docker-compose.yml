@@ -6,15 +6,15 @@ services:
     volumes:
       - ./data:/data/db
     ports:
-      - "27017:27017"
+      - '5000:27017'
   gecar_app:
-    build: 
-      context: . 
+    build:
+      context: .
       dockerfile: Dockerfile.gecars
     restart: always
     tty: true
     ports:
-      - 3000:3000
+      - 5001:5001
     depends_on:
       - mongo
-    command: bash -c "/usr/app/wait-for-it.sh --timeout=20 mongo:27017 && /usr/app/initAndStartService.sh"
+    command: bash -c "/usr/app/initAndStartService.sh"

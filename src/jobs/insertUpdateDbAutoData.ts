@@ -80,9 +80,7 @@ async function init() {
 
     let saveMake = false
 
-    if (!make) {
-      make = (await createMake({ make: _make.make })) as MakeModelI
-    } else {
+    const insertModels = async () => {
       for (let _model of _make.modelTypes) {
         let model = await updateModel(make._id, _model.name, _model)
 
@@ -97,6 +95,13 @@ async function init() {
           }
         }
       }
+    }
+
+    if (!make) {
+      make = (await createMake({ make: _make.make })) as MakeModelI
+      await insertModels()	    
+    } else {
+      await insertModels()	     
     }
 
     if (saveMake) make.save()
