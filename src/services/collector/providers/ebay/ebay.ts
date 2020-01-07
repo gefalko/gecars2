@@ -6,28 +6,7 @@ import { MakeModelI } from 'dbStuff/models/make/MakeModel'
 import { ModelTypeModelI } from 'dbStuff/models/modelType/ModelTypeModel'
 import ParsedAdWithoutFilterData from 'appTypes/ParsedAdWithoutFilterData'
 import UserPopulatedOrderFilter from 'appTypes/UserPopulatedOrderFilter'
-
-function formatFuelUrl(filter: UserPopulatedOrderFilter) {
-  return '&Fuel=' + (filter.fuel ? capitalize(filter.fuel) : '')
-}
-
-function formatUrl(filter: UserPopulatedOrderFilter) {
-  if (!filter.make) {
-    throw new Error(`ERROR: filter.make is falsy`)
-  }
-
-  const urlFuel = formatFuelUrl(filter)
-  const urlMake = capitalize(filter.make.make)?.replace(' ', '%2520')
-  const urlModel = capitalize(filter.modelType?.providersData?.ebay ?? filter.modelType?.name)?.replace(' ', '%2520')
-
-  if (!urlModel || urlModel == 'not-exist') {
-    throw new Error(`ERROR: Module ${filter.modelType?.name} not exist in Ebay`)
-  }
-
-  const url = `https://www.ebay.co.uk/b/Cars/9801?${urlFuel}&Manufacturer=${urlMake}&Model=${urlModel}&rt=nc&_udlo=${filter.priceFrom}&_udhi=${filter.priceTo}&_sop=10`
-
-  return url
-}
+import { toArray } from 'services/collector/utils'
 
 async function getHtml(url: string) {
   const headers = {
@@ -50,12 +29,26 @@ async function getHtml(url: string) {
   return response.data
 }
 
-function toArray(elements: Cheerio, $: CheerioStatic) {
-  let array: Cheerio[] = []
-  elements.each(function(i, elem) {
-    array.push($(elem))
-  })
-  return array
+function formatFuelUrl(filter: UserPopulatedOrderFilter) {
+  return '&Fuel=' + (filter.fuel ? capitalize(filter.fuel) : '')
+}
+
+function formatUrl(filter: UserPopulatedOrderFilter) {
+  if (!filter.make) {
+    throw new Error(`ERROR: filter.make is falsy`)
+  }
+
+  const urlFuel = formatFuelUrl(filter)
+  const urlMake = capitalize(filter.make.make)?.replace(' ', '%2520')
+  const urlModel = capitalize(filter.modelType?.providersData?.ebay ?? filter.modelType?.name)?.replace(' ', '%2520')
+
+  if (!urlModel || urlModel == 'not-exist') {
+    throw new Error(`ERROR: Module ${filter.modelType?.name} not exist in Ebay`)
+  }
+
+  const url = `https://www.ebay.co.uk/b/Cars/9801?${urlFuel}&Manufacturer=${urlMake}&Model=${urlModel}&rt=nc&_udlo=${filter.priceFrom}&_udhi=${filter.priceTo}&_sop=10`
+
+  return url
 }
 
 function parseUrl(adElement: Cheerio) {

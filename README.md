@@ -12,3 +12,10 @@ Mail sending settings
 
 Please add mail creditionals to `src/jobs/collector.ts` and run `docker-compose up --build` for rebuild. 
 
+-------------------------------------------------------------------------------------------------------
+DEBUGER
+-------------------------------------------------------------------------------------------------------
+
+Debuger helps to test/develop providers.
+
+example: yarn start-debuger providerForTest=gumtree make=chevrolet model=lacetti priceFrom=0 priceTo=800 yearFrom=1990 yearTo 2030 

@@ -10,7 +10,8 @@
     "build-insertUpdateDbAutoData": "webpack --targetFile=insertUpdateDbAutoData",
     "build-insertUpdateDbProviders": "webpack --targetFile=insertUpdateDbProviders",
     "build-collector": "webpack --targetFile=collector",
-    "build-debuger": "webpack --targetFile=debuger"
+    "build-debuger": "webpack --targetFile=debuger",
+    "start-debuger": "node ./dist/debuger.js"
   },
   "devDependencies": {
     "@types/node": "^12.12.7",

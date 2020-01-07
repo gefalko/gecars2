@@ -1,8 +1,8 @@
 require('dbStuff/initDb')
 import { Ad } from 'dbStuff/models/ad/AdModel'
 import Provider from 'appTypes/Provider'
-// import autotraderCollector from '~/services/collector/providers/autotrader/autotrader'
 import ebayCollector from './providers/ebay/ebay'
+import gumtreeCollector from './providers/gumtree/gumtree'
 import ParsedAd from 'appTypes/ParsedAd'
 import UserPopulatedOrderFilter from 'appTypes/UserPopulatedOrderFilter'
 import UserPopulatedOrderFilterProvider from 'appTypes/UserPopulatedOrderFilterProvider'
@@ -26,8 +26,7 @@ export async function collect(strategy: Provider, filter: UserPopulatedOrderFilt
   try {
     switch (strategy) {
       case 'gumtree':
-        return []
-      //return  addFilterIdAndProvider(await new Gumtree(new httpRequest()).getNewAds(filter))
+        return  gumtreeCollector(filter)
       case 'autotrader':
         // return addFilterIdAndProvider(await autotraderCollector.getFiltrededAds(filter))
         return []

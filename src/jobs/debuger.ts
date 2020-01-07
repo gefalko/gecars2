@@ -1,6 +1,6 @@
 import ParsedAd from 'appTypes/ParsedAd'
 import ebayCollector from 'services/collector/providers/ebay/ebay'
-import autoTraderCollector from 'services/collector/providers/autotrader/autotrader'
+import gumtreeCollector from 'services/collector/providers/gumtree/gumtree'
 import UserPopulatedOrderFilter from 'appTypes/UserPopulatedOrderFilter'
 
 interface IArgs {
@@ -56,12 +56,27 @@ async function testEbay(filter: UserPopulatedOrderFilter) {
   }
 }
 
+async function testGumtree(filter: UserPopulatedOrderFilter) {
+  try {
+    console.log('=============================================================')
+    console.log(`Testing ${filter.make?.make} ${filter.modelType?.name}`)
+    console.log('=============================================================')
+    console.log(`gumtree:`)
+    console.log('-------------------------------------------------------------')
+    resPrinter((await gumtreeCollector(filter)) as ParsedAd[])
+    console.log('-------------------------------------------------------------')
+  } catch (err) {
+    console.log('Err on gumtree')
+    console.log(err)
+  }
+}
+
 async function testAutotrader(filter: UserPopulatedOrderFilter) {
   try {
     console.log('-------------------------------------------------------------')
     console.log(`autotrader `)
     console.log('-------------------------------------------------------------')
-    let ads = await autoTraderCollector.getFiltrededAds(filter)
+    let ads = [] as ParsedAd[]
     resPrinter(ads)
     console.log('-------------------------------------------------------------')
   } catch (err) {
@@ -70,34 +85,15 @@ async function testAutotrader(filter: UserPopulatedOrderFilter) {
   }
 }
 
-/*
-async function testGumtree(filter: FilterInterface) {
-  try {
-    console.log('-------------------------------------------------------------')
-    console.log(`gumtree `)
-    console.log('-------------------------------------------------------------')
-    const ads = await new Gumtree(new httpRequest()).debugModeOn().getNewAds(filter)
-    resPrinter(ads)
-    console.log('-------------------------------------------------------------')
-  } catch (err) {
-    console.log('Err on gumtree')
-    console.log(err)
-  }
-
-  return true
-}
-*/
 
 function test(provider: string, filter: UserPopulatedOrderFilter) {
   switch (provider) {
     case 'autotrader':
       testAutotrader(filter)
       break
-    /*
     case 'gumtree':
       testGumtree(filter)
       break
-      */
     case 'ebay':
       testEbay(filter)
       break

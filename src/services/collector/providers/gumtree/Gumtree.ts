@@ -1,222 +1,154 @@
-/*
 import cheerio from 'cheerio'
-import { FilterModelI } from '~/dbStuff/models/filter/FilterModel'
-import ProviderInterface from '~/appTypes/ProviderModel'
-import { AdInterface } from '~/dbStuff/models/ad/AdInterface'
-import { FilterInterface } from '~/dbStuff/models/filter/FilterInterface'
-import { Ad } from '~/dbStuff/models/ad/AdModel'
+import axios from 'axios'
+import UserPopulatedOrderFilter from 'appTypes/UserPopulatedOrderFilter'
+import ParsedAdWithoutFilterData from 'appTypes/ParsedAdWithoutFilterData'
+import { toArray, findElement } from 'services/collector/utils'
 
-export class Gumtree implements ProviderInterfacei {
-  debug: boolean = false
-  $ = null
-  requestHtml: requestHtmlInterface
-
-  constructor(requestHtml: requestHtmlInterface, debug?: boolean) {
-    this.requestHtml = requestHtml
-    this.debug = debug
+async function getHtml(url: string) {
+  const headers = {
+    'cache-control': 'no-cache',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
   }
 
-  public debugModeOn() {
-    this.debug = true
-    return this
+  const response = await axios.get(url, {
+    headers,
+  })
+
+  return response.data
+}
+
+function formatUrl(filter: UserPopulatedOrderFilter) {
+  const make = filter.make.make.toLowerCase()
+  const model = (filter.modelType?.providersData?.gumtree ?? filter.modelType?.name)?.toLowerCase()
+  const fuel = filter.fuel ? `/${filter.fuel}` : ''
+
+  return `https://www.gumtree.com/cars/uk/${make}/${model}${fuel}?max_price=${filter.priceFrom}&min_price=${filter.priceTo}&sort=date`
+}
+
+function parseProviderAdId(adElement: Cheerio) {
+  const adId = adElement.find('article').attr('data-q')
+
+  console.log(adId)
+
+  if (!adId) {
+    throw 'can`t set gumtree providerAdId.'
   }
 
-  consolelog(msg, obj?: object) {
-    if (true) {
-      console.log(msg)
-      if (obj) {
-        console.log(obj)
-      }
-    }
+  return adId
+}
+
+function parseAdUrl(adElement: Cheerio) {
+  const adUrl = adElement.find('a.listing-link').attr('href')
+
+  if (!adUrl) {
+    throw 'can`t set gumtree addUrl.'
   }
 
-  // @TODO move out to service
-  private static priceFilter(ad: AdInterface, filter: FilterInterface) {
-    console.log(
-      'ad.price >= filter.priceFrom && ad.price <= filter.priceTo',
-      `${ad.price} >= ${filter.priceFrom} && ${ad.price} <= ${filter.priceTo}`,
-    )
+  return adUrl
+}
 
-    return ad.price >= filter.priceFrom && ad.price <= filter.priceTo
+function parseAdYear(adElement: Cheerio) {
+  const elements = adElement.find('ul.listing-attributes li')
+  const yearsElment = findElement(elements, ($) => {
+    const type = $('.hide-visually').text()
+    return type === 'Year'
+  })
+
+  if (!yearsElment) {
+    throw 'can`t set gumtree year.'
   }
 
-  // @TODO move out to service
-  private static yearsFilter(ad: AdInterface, filter: FilterInterface) {
-    console.log(
-      'ad.year >= filter.yearFrom && ad.year <= filter.yearTo',
-      `${ad.year} >= ${filter.yearFrom} && ${ad.year} <= ${filter.yearTo}`,
-    )
-    return ad.year >= filter.yearFrom && ad.year <= filter.yearTo
+  const year = yearsElment('span:not(.hide-visually)').text()
+
+  return parseInt(year)
+}
+
+function parseAdFuel(adElement: Cheerio) {
+  console.log('parsign fuel')
+  const elements = adElement.find('ul.listing-attributes li')
+
+  const yearsElment = findElement(elements, ($) => {
+    const type = $('.hide-visually').text()
+    console.log(type)
+    return type === 'Fuel type'
+  })
+
+  if (!yearsElment) {
+    throw 'can`t set gumtree fuel.'
   }
 
-  // @TODO move out to service
-  private static doFilter(ad: AdInterface, filter: FilterInterface) {
-    const passPriceFilter = Gumtree.priceFilter(ad, filter)
-    const passYearsFilter = Gumtree.yearsFilter(ad, filter)
+  const fuel = yearsElment('span:not(.hide-visually)').text()
 
-    console.log('PASS price filter:', passPriceFilter)
-    console.log('PASS years filter:', passYearsFilter)
+  return fuel.toLowerCase()
+}
 
-    return passPriceFilter && passYearsFilter
+function parseAdImg(adElement: Cheerio) {
+  const imgUrl = adElement.find('.listing-thumbnail img').attr('src')
+
+  if (!imgUrl) {
+    throw 'can`t set gumtree img.'
   }
 
-  public async getNewAds(filter: FilterModelI): Promise<AdInterface[]> {
-    this.consolelog('filter', filter)
+  return imgUrl
+}
 
-    // check or gumtree has this kind model
-    if (filter.modelType.providersData.gumtree === null) {
-      return []
-    }
+function parseAdTitle(adElement: Cheerio) {
+  const title = adElement.find('.listing-title').text()
 
-    const url = Gumtree.getUrl(filter)
-
-    if (this.debug) {
-      console.log('URL FOR FILTER: ')
-      console.log(url)
-    }
-
-    const html: string = await this.requestHtml.getHtml(url)
-
-    console.log('-------------------------HTML-----------------------------')
-    console.log(html)
-    console.log('-------------------------HTML-----------------------------')
-
-    this.$ = cheerio.load(html)
-
-    return await this.checkAds(filter)
+  if (!title) {
+    throw 'can`t set gumtree title.'
   }
 
-  private async checkAds(filter: FilterModelI): Promise<AdInterface[]> {
-    const consolelog = this.consolelog
+  return title
+}
 
-    this.consolelog('Start checkAds.')
+function parseAdPrice(adElement: Cheerio) {
+  const price = adElement.find('.listing-price strong').text()
 
-    const urlAds: AdInterface[] = this.getUrlAds(filter)
-
-    this.consolelog('Print formated but not filtered ads from html:', urlAds)
-
-    const filtredAds: AdInterface[] = []
-
-    for (let ad of urlAds) {
-      if (await checkAd(ad)) {
-        filtredAds.push(ad)
-      }
-    }
-
-    const self = this
-
-    async function checkAd(ad: AdInterface): Promise<boolean> {
-      consolelog('Check or specifc add pass filter requarements:', ad)
-
-      try {
-        const dbAd = await Ad.findOne({ filter: ad.filter, providerAdId: ad.providerAdId }).exec()
-
-        if (dbAd == null) {
-          if (Gumtree.doFilter(ad, filter)) {
-            //ads.push(ad); @TODO change true to this.debug
-            if (true) {
-              console.log('Gumtree:' + ` FOUND NEW ADD -> ${ad.url}`)
-            }
-
-            return true
-          }
-        }
-      } catch (err) {
-        console.log(err)
-      }
-
-      return false
-    }
-
-    return filtredAds
+  if (!price) {
+    throw 'can`t set gumtree price.'
   }
 
-  public getUrlAds(filter: FilterModelI): AdInterface[] {
-    const extractElementAd = (i, elem) => {
-      return this.extract(elem, filter)
-    }
+  return parseInt(price.replace('£', '').replace(',', ''))
+}
 
-    const featuredAds: AdInterface[] = this.$('ul[data-q="featuredresults"] > li')
-      .map(extractElementAd)
-      .get()
-
-    console.log('number of featuredAds:', featuredAds.length)
-
-    const naturalAds: AdInterface[] = this.$('ul[data-q="naturalresults"] > li.natural')
-      .map(extractElementAd)
-      .get()
-
-    console.log('number of naturalAds:', naturalAds.length)
-
-    return [].concat(featuredAds, naturalAds)
+async function parseAdElement(adElement: Cheerio): Promise<ParsedAdWithoutFilterData | null> {
+  return {
+    providerAdId: parseProviderAdId(adElement),
+    url: parseAdUrl(adElement),
+    year: parseAdYear(adElement),
+    fuel: parseAdFuel(adElement),
+    img: parseAdImg(adElement),
+    title: parseAdTitle(adElement),
+    price: parseAdPrice(adElement),
   }
+}
 
-  private static parsePrice(element) {
-    return element
-      .text()
-      .replace('¬£', '')
-      .replace(',', '')
-  }
+function parsePage(html: string) {
+  const $ = cheerio.load(html)
 
-  public extract(element, filter: FilterModelI): AdInterface {
-    return {
-      filter: filter._id,
-      make: filter.make._id,
-      modelType: filter.modelType._id,
-      fuel: this.$(element)
-        .find('[itemprop="fuelType"]')
-        .text(),
-      year: Number(
-        this.$(element)
-          .find('[itemprop="dateVehicleFirstRegistered"]')
-          .text(),
-      ),
-      price: Number(Gumtree.parsePrice(this.$(element).find('.listing-price'))),
-      providerAdId: this.$(element)
-        .find('[data-q]')
-        .attr('data-q'),
-      url:
-        'https://www.gumtree.com' +
-        this.$(element)
-          .find('[itemprop="url"]')
-          .attr('href'),
-      img: this.$(element)
-        .find('noscript img')
-        .attr('src'),
-    }
-  }
+  /*
+   *  PROBLEM IS THAT GUMTREE BLOCKED AND ASK CAPTCHA
+   *  POSIBLE SOLUTIONS:
+   *  A) USE CORRECT REUQEST HEADER
+   *  B) TRY PROXIES SERVICES
+   *
+   *  AFTER NEED TO CHECK OR HTML TILL IS PARSING CORRECTLY :)
+   **/	
+  console.log(html)	
 
-  public static getUrl(filter: FilterInterface): string {
-    const data = filter.modelType.providersData.gumtree
+  const adElementList = toArray($('ul.list-listing-mini li.natural'), $)	
+  const parsedAdsPromises = adElementList.map(parseAdElement)
 
-    let modelType = ''
-    let q = ''
+  return Promise.all(parsedAdsPromises)
+}
 
-    if (!data) {
-      modelType = filter.modelType.name
-    } else if (!data.q) {
-      modelType = filter.modelType.providersData.gumtree
-    } else {
-      q = data.q
-    }
+async function collect(filter: UserPopulatedOrderFilter) {
+  const url = formatUrl(filter)
+  const html = await getHtml(url)
+  const parsedAds = await parsePage(html)
 
-    const modelTypeName = modelType
-      .toLowerCase()
-      .split(' ')
-      .join('-')
+  return parsedAds
+}
 
-    const { priceFrom, priceTo, make } = filter
-    const host = 'https://www.gumtree.com/cars/uk/'
-
-    return `${host}${make.make.toLowerCase()}/${modelTypeName}?max_price=${priceTo}&min_price=${priceFrom}`
-
-    return `https://www.gumtree.com/search?search_category=cars&search_location=uk&vehicle_make=${filter.make.make.toLowerCase()}&vehicle_model=${modelType.toLowerCase()}&q=${q}&min_price=${
-      filter.priceFrom
-    }&max_price=${filter.priceTo}${Gumtree.getFuelForUrl(filter)}`
-  }
-
-  private static getFuelForUrl(filter: FilterInterface): string {
-    return filter.fuel ? '&vehicle_fuel_type=' + filter.fuel : ''
-  }
-i}
-*/
+export default collect

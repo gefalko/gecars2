@@ -1,3 +1,4 @@
+/*
 import { getHtml } from 'services/httpService'
 import { parseAds, parsePagesNumber } from './autoTraderParser'
 import capitalize from 'utils/capitalize'
@@ -107,8 +108,10 @@ async function filterAdsNotInDB(ads: ParsedAd[]) {
   return filtredAds
 }
 
-*/
 
 export default {
   getFiltrededAds,
 }
+*/
+
+export default undefined
